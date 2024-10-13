@@ -1,45 +1,47 @@
+// Initialize an empty array to hold tasks
+let tasks = [];
+
+// Load stored tasks from local storage when the DOM is fully loaded
 document.addEventListener("DOMContentLoaded", () => {
   const storedTasks = JSON.parse(localStorage.getItem("tasks"));
 
   if (storedTasks) {
-    storedTasks.forEach((task) => tasks.push(task));
+    tasks = storedTasks;
     updateTasksList();
     updateStats();
   }
 });
 
-let tasks = [];
-
+// Function to save tasks to local storage
 const saveTask = () => {
   localStorage.setItem("tasks", JSON.stringify(tasks));
 };
+
+// Function to add a new task
 const addTask = () => {
   const taskInput = document.getElementById("taskInput");
   const text = taskInput.value.trim();
 
   if (text) {
     tasks.push({ text: text, completed: false });
+    taskInput.value = ""; // Clear input field after adding
     updateTasksList();
     updateStats();
     saveTask();
   }
 };
 
+// Function to update the statistics of tasks
 const updateStats = () => {
   const completedTasks = tasks.filter((task) => task.completed).length;
   const totalTasks = tasks.length;
-  const progress = (completedTasks / totalTasks) * 100;
+  const progress = totalTasks ? (completedTasks / totalTasks) * 100 : 0;
   const progressBar = document.getElementById("progress");
   progressBar.style.width = `${progress}%`;
-  document.getElementById(
-    "numbers"
-  ).innerHTML = `${completedTasks} / ${totalTasks}`;
-
-  if (tasks.length != 0 && completedTasks === totalTasks) {
-    blast();
-  }
+  document.getElementById("numbers").innerHTML = `${completedTasks} / ${totalTasks}`;
 };
 
+// Function to toggle the completion status of a task
 const toggleTaskComplete = (index) => {
   tasks[index].completed = !tasks[index].completed;
   updateTasksList();
@@ -47,6 +49,7 @@ const toggleTaskComplete = (index) => {
   saveTask();
 };
 
+// Function to delete a task
 const deleteTask = (index) => {
   tasks.splice(index, 1);
   updateTasksList();
@@ -54,84 +57,46 @@ const deleteTask = (index) => {
   saveTask();
 };
 
+// Function to edit a task
 const editTask = (index) => {
-  const taskInput = document.getElementById("taskInput");
-  taskInput.value = tasks[index].text;
-  tasks.splice(index, 1);
-  updateTasksList();
-  updateStats();
-  saveTask();
+  const newText = prompt("Edit your task:", tasks[index].text);
+  
+  if (newText !== null && newText.trim() !== "") {
+    tasks[index].text = newText; // Update the task's text
+    updateTasksList(); // Update the displayed task list
+    updateStats(); // Update statistics
+    saveTask(); // Save the updated tasks to local storage
+  }
 };
 
+// Function to update the displayed list of tasks
 const updateTasksList = () => {
   const taskList = document.getElementById("task-list");
-  taskList.innerHTML = "";
+  taskList.innerHTML = ""; // Clear the existing list
 
   tasks.forEach((task, index) => {
     const listItem = document.createElement("li");
 
     listItem.innerHTML = `
-        <div class = "taskItem">
-        <div class = "task ${task.completed ? "completed" : ""}">
-        <input type="checkbox" class = "checkbox" ${
-          task.completed ? "checked" : ""
-        } />
-        <p>${task.text}</p>
+        <div class="taskItem">
+          <div class="task ${task.completed ? "completed" : ""}">
+            <input type="checkbox" class="checkbox" ${
+              task.completed ? "checked" : ""
+            } onchange="toggleTaskComplete(${index})" />
+            <p>${task.text}</p>
+          </div>
+          <div class="icons">
+            <img src="./images/edit.png" onClick="editTask(${index})" />
+            <img src="./images/bin.png" onClick="deleteTask(${index})" />
+          </div>
         </div>
-        <div class = "icons">
-        <img src ="./images/edit.png" onClick ="deleteTask(${index})"/>
-        <img src="./images/bin.png" onClick ="editTask(${index})"/>
-        </div
-        </div>
-        `;
-    listItem.addEventListener("change", () => toggleTaskComplete(index));
-    taskList.append(listItem);
+      `;
+    taskList.appendChild(listItem); // Add the new list item to the task list
   });
 };
 
+// Add event listener to the "Add Task" button
 document.getElementById("newTask").addEventListener("click", function (e) {
-  e.preventDefault();
-  addTask();
+  e.preventDefault(); // Prevent form submission
+  addTask(); // Call the addTask function to add a new task
 });
-
-const blast = () => {
-  const count = 200,
-    defaults = {
-      origin: { y: 0.7 },
-    };
-
-  function fire(particleRatio, opts) {
-    confetti(
-      Object.assign({}, defaults, opts, {
-        particleCount: Math.floor(count * particleRatio),
-      })
-    );
-  }
-
-  fire(0.25, {
-    spread: 26,
-    startVelocity: 55,
-  });
-
-  fire(0.2, {
-    spread: 60,
-  });
-
-  fire(0.35, {
-    spread: 100,
-    decay: 0.91,
-    scalar: 0.8,
-  });
-
-  fire(0.1, {
-    spread: 120,
-    startVelocity: 25,
-    decay: 0.92,
-    scalar: 1.2,
-  });
-
-  fire(0.1, {
-    spread: 120,
-    startVelocity: 45,
-  });
-};
